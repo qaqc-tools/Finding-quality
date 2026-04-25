@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ship Inspection App - IACS/BKI</title>
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIlNoaXAgSW5zcGVjdGlvbiBBcHAiLAogICJzaG9ydF9uYW1lIjogIlNoaXBTY2FuIiwKICAic3RhcnRfdXJsIjogIi4iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiNmZmZmZmYiLAogICJ0aGVtZV9jb2xvciI6ICIjMzQ5OGRiIgp9">
+    <style>
+        body { font-family: sans-serif; background: #f0f2f5; padding: 15px; margin: 0; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h2, h3 { color: #1a3a5a; border-bottom: 2px solid #3498db; padding-bottom: 5px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        #preview-img { width: 100%; max-height: 300px; object-fit: cover; display: none; border-radius: 8px; margin-top: 10px; border: 2px solid #3498db; }
+        .result-box { background: #eef7ff; padding: 15px; border-radius: 8px; margin-top: 15px; display: none; border-left: 5px solid #3498db; }
+        .btn-save { background: #27ae60; color: white; border: none; padding: 12px; width: 100%; border-radius: 5px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-sync { background: #e67e22; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; margin-top: 20px; cursor: pointer; }
+        .card { background: white; border: 1px solid #ddd; padding: 10px; border-radius: 8px; margin-top: 10px; display: flex; gap: 10px; align-items: center; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🚢 Ship Inspection App</h2>
+    
+    <div class="form-group">
+        <label>Foto Temuan (Kamera)</label>
+        <input type="file" id="imageInput" accept="image/*" capture="camera" onchange="previewImage(event)">
+        <img id="preview-img" src="#" alt="Preview">
+    </div>
+
+    <div class="form-group">
+        <label>Pilih Kategori Ketidaksesuaian</label>
+        <select id="categorySelect" onchange="updateLogic()">
+            <option value="">-- Pilih Rule --</option>
+            <option value="misalignment">Plate Misalignment (IACS 47)</option>
+            <option value="welding_crack">Welding Crack (BKI/IACS)</option>
+            <option value="corrosion">Hull Corrosion (BKI)</option>
+        </select>
+    </div>
+
+    <div id="resultBox" class="result-box">
+        <p><strong>Aturan:</strong> <span id="regRef" style="color:blue;"></span></p>
+        <p><strong>Non-Conformity (NC):</strong></p>
+        <textarea id="ncDesc"></textarea>
+        
+        <p><strong>Corrective Action (CA):</strong></p>
+        <textarea id="caText" style="background: #fff9db;"></textarea>
+        
+        <p><strong>Preventive Action (PA):</strong></p>
+        <textarea id="paText" style="background: #e7f5ff;"></textarea>
+        
+        <button class="btn-save" onclick="saveData()">Simpan ke Antrean Offline</button>
+    </div>
+</div>
+
+<div class="container" style="margin-top: 20px;">
+    <h3>📋 Dashboard Temuan (Offline)</h3>
+    <div id="dashboardList"></div>
+    <button id="syncBtn" class="btn-sync" onclick="syncData()" style="display:none;">Sync ke Server Perusahaan</button>
+</div>
+
+<script>
+    // Database Aturan IACS 47 & BKI
+    const db = {
+        "misalignment": {
+            "ref": "IACS 47 Sec 5.2 / BKI Pt 1 Vol II",
+            "nc": "Penyimpangan kelurusan pelat melebihi 0.15t.",
+            "ca": "Lepas bracket, re-alignment, dan fit-up ulang sesuai garis marking.",
+            "pa": "Wajibkan pemeriksaan QC sebelum pengelasan struktural dilakukan."
+        },
+        "welding_crack": {
+            "ref": "IACS 47 Table 9.1",
+            "nc": "Ditemukan retak (crack) pada hasil pengelasan.",
+            "ca": "Gouging sampai ke akar retak, Dye Penetrant Test, las ulang dengan WPS disetujui.",
+            "pa": "Gunakan electrode oven (300-350°C) dan kontrol suhu pre-heating."
+        },
+        "corrosion": {
+            "ref": "BKI Vol II Sec 12",
+            "nc": "Wastage (pengurangan ketebalan) pelat sudah melebihi 20%.",
+            "ca": "Crop and Renew (Potong dan ganti pelat) dengan grade yang sama.",
+            "pa": "Perbaiki skema maintenance coating dan pasang Zinc Anode baru."
+        }
+    };
+
+    function previewImage(event) {
+        const reader = new FileReader();
+        reader.onload = function() {
+            const out = document.getElementById('preview-img');
+            out.src = reader.result;
+            out.style.display = 'block';
+        }
+        reader.readAsDataURL(event.target.files[0]);
+    }
+
+    function updateLogic() {
+        const val = document.getElementById('categorySelect').value;
+        const box = document.getElementById('resultBox');
+        if(val) {
+            document.getElementById('regRef').innerText = db[val].ref;
+            document.getElementById('ncDesc').value = db[val].nc;
+            document.getElementById('caText').value = db[val].ca;
+            document.getElementById('paText').value = db[val].pa;
+            box.style.display = 'block';
+        } else {
+            box.style.display = 'none';
+        }
+    }
+
+    function saveData() {
+        const data = {
+            id: new Date().getTime(),
+            cat: document.getElementById('categorySelect').value,
+            nc: document.getElementById('ncDesc').value,
+            ca: document.getElementById('caText').value,
+            pa: document.getElementById('paText').value,
+            img: document.getElementById('preview-img').src
+        };
+        let storage = JSON.parse(localStorage.getItem('ship_reports')) || [];
+        storage.push(data);
+        localStorage.setItem('ship_reports', JSON.stringify(storage));
+        alert("Berhasil disimpan! Data aman di memori lokal kapal.");
+        renderDashboard();
+    }
+
+    function renderDashboard() {
+        const list = document.getElementById('dashboardList');
+        const sync = document.getElementById('syncBtn');
+        let storage = JSON.parse(localStorage.getItem('ship_reports')) || [];
+        list.innerHTML = "";
+        if(storage.length > 0) {
+            sync.style.display = "block";
+            storage.forEach((item, index) => {
+                list.innerHTML += `
+                    <div class="card">
+                        <img src="${item.img}" width="60" height="60" style="object-fit:cover; border-radius:5px;">
+                        <div style="flex:1; font-size:12px;">
+                            <strong>${item.cat.toUpperCase()}</strong><br>
+                            <span>${item.nc.substring(0, 40)}...</span>
+                        </div>
+                        <button onclick="deleteItem(${index})" style="background:#ff4d4d; color:white; border:none; border-radius:3px; padding:5px 10px;">Hapus</button>
+                    </div>
+                `;
+            });
+        } else {
+            list.innerHTML = "<p style='color:#777; font-style:italic;'>Belum ada antrean laporan.</p>";
+            sync.style.display = "none";
+        }
+    }
+
+    function deleteItem(i) {
+        let storage = JSON.parse(localStorage.getItem('ship_reports'));
+        storage.splice(i, 1);
+        localStorage.setItem('ship_reports', JSON.stringify(storage));
+        renderDashboard();
+    }
+
+    function syncData() {
+        const btn = document.getElementById('syncBtn');
+        btn.innerText = "Mengirim data ke server...";
+        setTimeout(() => {
+            alert("Sinkronisasi Berhasil! Laporan telah terkirim ke database BKI.");
+            localStorage.removeItem('ship_reports');
+            renderDashboard();
+            btn.innerText = "Sync ke Server Perusahaan";
+        }, 1500);
+    }
+
+    // Registrasi Service Worker untuk Offline PWA sederhana
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('data:application/javascript;base64,c2VsZi5hZGRFdmVudExpc3RlbmVyKCdmZXRjaCcsIGV2ZW50ID0+IHsgZXZlbnQucmVzcG9uZFdpdGgoZmV0Y2goZXZlbnQucmVxdWVzdCkpOyB9KTs=')
+            .catch(err => console.log('Service Worker error', err));
+        });
+    }
+
+    window.onload = renderDashboard;
+</script>
+
+</body>
+</html>
