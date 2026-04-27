@@ -3,46 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Finding Quality - QA/QC Final System</title>
+    <title>Finding Quality - QA/QC Pro</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        /* TAMPILAN UI DI HP/KOMPUTER */
-        body { font-family: 'Segoe UI', sans-serif; background: #eaeff2; padding: 10px; margin: 0; }
-        .ui-container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: #1a3a5a; border-bottom: 3px solid #3498db; padding-bottom: 8px; margin-top: 0; }
-        .header-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 15px; }
-        label { font-weight: bold; font-size: 11px; color: #555; display: block; margin-bottom: 3px; }
-        input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px; font-size: 13px; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; padding: 10px; margin: 0; }
+        .ui-container { max-width: 500px; margin: auto; background: #1e1e1e; padding: 20px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+        h2 { text-align: center; color: #3498db; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
         
-        /* Box Foto & Zoom */
-        .viewer-box { width: 100%; height: 280px; background: #222; border-radius: 10px; overflow: hidden; position: relative; display: none; margin-top: 10px; border: 2px solid #3498db; }
+        .header-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        label { font-size: 11px; color: #bbb; display: block; margin-bottom: 4px; }
+        input { width: 100%; padding: 10px; background: #2c2c2c; border: 1px solid #444; border-radius: 6px; color: white; box-sizing: border-box; }
+        
+        .upload-box { border: 2px dashed #3498db; padding: 30px; text-align: center; border-radius: 10px; cursor: pointer; margin-bottom: 15px; background: #252525; }
+        .viewer { width: 100%; height: 250px; background: #000; border-radius: 10px; overflow: hidden; position: relative; display: none; border: 1px solid #3498db; margin-bottom: 10px; }
         #zoom-img { width: 100%; height: 100%; object-fit: contain; transform-origin: center; transition: transform 0.2s; }
-        .zoom-tools { display: flex; justify-content: center; gap: 10px; margin-top: 8px; display: none; }
-        .btn-z { background: #34495e; color: white; border: none; padding: 5px 12px; border-radius: 4px; font-size: 11px; cursor: pointer; }
+        
+        .btn-ai { background: #2980b9; color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; display: block; }
+        .btn-ai:disabled { background: #555; cursor: not-allowed; }
+        .btn-share { background: #27ae60; color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 20px; display: none; }
 
-        /* Panel Hasil & CAPA */
-        #res-panel { display: none; margin-top: 15px; border-top: 2px solid #eee; padding-top: 15px; }
-        .ui-capa-area { background: #f9f9f9; padding: 12px; border-radius: 8px; border: 1px solid #ddd; margin-top: 10px; font-size: 12px; }
+        .res-panel { display: none; margin-top: 20px; padding: 15px; background: #2c2c2c; border-radius: 8px; border-left: 4px solid #3498db; }
         .status-badge { padding: 10px; border-radius: 6px; text-align: center; font-weight: bold; margin: 10px 0; }
-        .reject { background: #fdedec; color: #e74c3c; border: 1px solid #f5b7b1; }
-        .accept { background: #eafaf1; color: #27ae60; border: 1px solid #abebc6; }
+        .reject { background: #442726; color: #e74c3c; border: 1px solid #e74c3c; }
+        .accept { background: #1b3320; color: #2ecc71; border: 1px solid #2ecc71; }
 
-        .btn-main { background: #3498db; color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .btn-share { background: #25d366; color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 20px; display: none; }
-
-        /* --- STYLE KHUSUS UNTUK PDF (HIDDEN) --- */
-        #pdf-template {
-            position: absolute; left: -9999px; top: 0;
-            width: 750px; padding: 40px; background: white; color: black;
-        }
-        .pdf-header { text-align: center; border-bottom: 3px solid #3498db; margin-bottom: 20px; }
+        /* PDF TEMPLATE (HIDDEN) */
+        #pdf-template { position: absolute; left: -9999px; top: 0; width: 750px; padding: 40px; background: white; color: black; box-sizing: border-box; }
+        .pdf-header { text-align: center; border-bottom: 3px solid #3498db; padding-bottom: 10px; margin-bottom: 20px; }
         .pdf-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        .pdf-table td { padding: 10px; border: 1px solid #ddd; font-size: 13px; }
-        .pdf-photo-wrap { width: 100%; height: 350px; background: #f3f3f3; border: 1px solid #3498db; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        .pdf-photo { max-width: 100%; max-height: 100%; object-fit: contain; }
-        .pdf-status { padding: 12px; text-align: center; font-weight: bold; font-size: 18px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #ddd; }
-        .pdf-capa-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .capa-item { border: 1px solid #ccc; padding: 12px; background: #f9f9f9; }
+        .pdf-table td { padding: 10px; border: 1px solid #ddd; font-size: 14px; }
+        .pdf-photo { width: 100%; height: 400px; object-fit: contain; border: 1px solid #3498db; margin-bottom: 20px; }
     </style>
 </head>
 <body>
@@ -50,152 +40,130 @@
 <div class="ui-container">
     <h2>Finding Quality</h2>
     <div class="header-grid">
-        <div><label>Project Code</label><input type="text" id="ui-prj" placeholder="PRJ-01"></div>
-        <div><label>Vessel Name</label><input type="text" id="ui-vsl" placeholder="MT. Ocean"></div>
-        <div><label>Location Area</label><input type="text" id="ui-loc" placeholder="Deck/Hull"></div>
-        <div><label>QC Inspector</label><input type="text" id="ui-qc" placeholder="Nama Anda"></div>
+        <div><label>Project Code</label><input type="text" id="ui-prj" value="PRJ-01"></div>
+        <div><label>Vessel Name</label><input type="text" id="ui-vsl" value="MT. Ocean"></div>
+        <div><label>Location</label><input type="text" id="ui-loc" value="Hull Area"></div>
+        <div><label>Inspector</label><input type="text" id="ui-qc" placeholder="Nama Anda"></div>
     </div>
 
-    <div id="upBtn" style="border:2px dashed #3498db; padding:20px; text-align:center; cursor:pointer; border-radius:10px;" onclick="document.getElementById('fileIn').click()">📸 Klik Ambil Foto / Upload</div>
+    <div id="upBtn" class="upload-box" onclick="document.getElementById('fileIn').click()">
+        📸 Klik Ambil Foto / Upload
+    </div>
     <input type="file" id="fileIn" accept="image/*" capture="camera" style="display:none" onchange="handlePreview(event)">
     
-    <div id="viewer" class="viewer-box"><img id="zoom-img" src="#"></div>
-    <div id="zTools" class="zoom-tools">
-        <button class="btn-z" onclick="doZoom(-0.2)">Zoom Out</button>
-        <button class="btn-z" onclick="doZoom(0)">Reset</button>
-        <button class="btn-z" onclick="doZoom(0.2)">Zoom In</button>
-    </div>
+    <div id="viewer" class="viewer"><img id="zoom-img" src="#"></div>
 
-    <button id="aiBtn" class="btn-main" onclick="runAI()" disabled style="margin-top:15px;">🤖 JALANKAN ANALISA AI</button>
+    <button id="aiBtn" class="btn-ai" onclick="runAI()" disabled>🤖 JALANKAN ANALISA AI</button>
 
-    <div id="res-panel">
-        <div style="background:#f0f7ff; padding:10px; border-radius:6px; font-weight:bold; font-size:13px;">AI Detection: <span id="ui-det-name">-</span></div>
-        
-        <label style="margin-top:10px;">Masukan Ukuran Aktual (mm/%):</label>
-        <input type="number" id="ui-val" placeholder="Contoh: 4.5" oninput="processAnalysis()">
-        
+    <div id="res-panel" class="res-panel">
+        <div style="font-size: 14px; margin-bottom: 10px;">Analisa: <span id="ui-det" style="color:#3498db; font-weight:bold;">-</span></div>
+        <label>Ukuran Aktual (mm/%):</label>
+        <input type="number" id="ui-val" placeholder="0.0" oninput="validateResult()">
         <div id="ui-status" class="status-badge" style="display:none;"></div>
-
-        <div id="ui-capa-display" class="ui-capa-area" style="display:none;">
-            <strong>Corrective Action (CA):</strong><p id="ui-ca-text" style="margin:5px 0 10px 0;"></p>
-            <strong>Preventive Action (PA):</strong><p id="ui-pa-text" style="margin:5px 0 0 0;"></p>
-        </div>
-        
-        <button id="shareBtn" class="btn-share" onclick="generatePDF()">📄 DOWNLOAD & SHARE PDF</button>
+        <button id="shareBtn" class="btn-share" onclick="generatePDF()">📄 SHARE PDF REPORT</button>
     </div>
 </div>
 
 <div id="pdf-template">
     <div class="pdf-header">
-        <h1 style="margin:0; font-size:24px; color:#1a3a5a;">FINDING QUALITY REPORT</h1>
-        <p style="margin:2px 0; font-weight:bold; color:#555;">DEPARTEMEN QA-QC</p>
+        <h1 style="margin:0;">FINDING QUALITY REPORT</h1>
+        <p style="margin:5px 0; font-weight:bold;">DEPARTEMEN QA-QC</p>
     </div>
     <table class="pdf-table">
         <tr>
-            <td width="20%"><strong>Project:</strong></td><td id="p-prj">-</td>
-            <td width="20%"><strong>Vessel:</strong></td><td id="p-vsl">-</td>
+            <td width="20%"><strong>Project:</strong></td><td id="p-prj"></td>
+            <td width="20%"><strong>Vessel:</strong></td><td id="p-vsl"></td>
         </tr>
         <tr>
-            <td><strong>Location:</strong></td><td id="p-loc">-</td>
-            <td><strong>Date:</strong></td><td id="p-dt">-</td>
+            <td><strong>Location:</strong></td><td id="p-loc"></td>
+            <td><strong>Date:</strong></td><td id="p-dt"></td>
         </tr>
         <tr>
-            <td><strong>Inspector:</strong></td><td id="p-qc">-</td>
-            <td><strong>Analysis:</strong></td><td id="p-det">-</td>
+            <td><strong>Inspector:</strong></td><td id="p-qc"></td>
+            <td><strong>Analysis:</strong></td><td id="p-det"></td>
         </tr>
     </table>
-    <div class="pdf-photo-wrap"><img id="p-img" class="pdf-photo" src=""></div>
-    <div id="p-stat" class="pdf-status">-</div>
-    <div class="pdf-capa-grid">
-        <div class="capa-item"><strong>Corrective Action:</strong><p id="p-ca">-</p></div>
-        <div class="capa-item"><strong>Preventive Action:</strong><p id="p-pa">-</p></div>
+    <img id="p-img" class="pdf-photo" src="">
+    <div id="p-stat" style="padding:15px; text-align:center; font-weight:bold; font-size:20px; border-radius:8px; border:2px solid #ddd;">-</div>
+    <div style="margin-top:20px; display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+        <div style="border:1px solid #ddd; padding:10px;"><strong>Corrective Action:</strong><p id="p-ca" style="font-size:12px;">-</p></div>
+        <div style="border:1px solid #ddd; padding:10px;"><strong>Preventive Action:</strong><p id="p-pa" style="font-size:12px;">-</p></div>
     </div>
 </div>
 
-// --- BAGIAN PREVIEW FOTO (REVISI) ---
-function handlePreview(e) {
-    const file = e.target.files[0];
-    if (!file) {
-        alert("Gagal mengambil file foto.");
-        return;
+<script>
+    let activeRule = null;
+    const rules = [
+        { n: "Plate Alignment (IACS 47)", l: 3, ca: "Re-alignment & Fit-up ulang.", pa: "QC Fit-up check mandatory." },
+        { n: "Hull Corrosion (BKI)", l: 20, ca: "Crop & Renew plate.", pa: "Audit coating system." }
+    ];
+
+    function handlePreview(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            document.getElementById('zoom-img').src = event.target.result;
+            document.getElementById('p-img').src = event.target.result;
+            document.getElementById('viewer').style.display = 'block';
+            document.getElementById('upBtn').innerText = "✅ Foto Berhasil Dimuat";
+            document.getElementById('aiBtn').disabled = false;
+        };
+        reader.readAsDataURL(file);
     }
 
-    // Validasi apakah benar file gambar
-    if (!file.type.startsWith('image/')) {
-        alert("Harap pilih file gambar (JPG/PNG).");
-        return;
+    function runAI() {
+        activeRule = rules[Math.floor(Math.random() * rules.length)];
+        document.getElementById('ui-det').innerText = activeRule.n;
+        document.getElementById('p-det').innerText = activeRule.n;
+        document.getElementById('res-panel').style.display = 'block';
     }
 
-    const reader = new FileReader();
-    
-    // Munculkan indikator loading sederhana
-    document.getElementById('upBtn').innerText = "⌛ Memproses Foto...";
+    function validateResult() {
+        const val = parseFloat(document.getElementById('ui-val').value);
+        const uiStatus = document.getElementById('ui-status');
+        const pStat = document.getElementById('p-stat');
+        if (isNaN(val)) return;
 
-    reader.onload = function(event) {
-        const imgData = event.target.result;
-        
-        // Masukkan foto ke viewer aplikasi
-        document.getElementById('zoom-img').src = imgData;
-        // Masukkan foto ke template PDF
-        document.getElementById('p-img').src = imgData;
-        
-        // Atur tampilan tombol
-        document.getElementById('viewer').style.display = 'block';
-        document.getElementById('zTools').style.display = 'flex';
-        document.getElementById('upBtn').style.display = 'none';
-        document.getElementById('aiBtn').disabled = false;
-        
-        console.log("Foto berhasil dimuat.");
-    };
+        uiStatus.style.display = 'block';
+        document.getElementById('shareBtn').style.display = 'block';
 
-    reader.onerror = function() {
-        alert("Terjadi kesalahan saat membaca file.");
-    };
+        if (val > activeRule.l) {
+            uiStatus.innerText = "❌ REJECTED"; uiStatus.className = "status-badge reject";
+            pStat.innerText = "REJECTED (Actual: " + val + ")";
+            pStat.style.borderColor = "#e74c3c"; pStat.style.color = "#e74c3c";
+            document.getElementById('p-ca').innerText = activeRule.ca;
+            document.getElementById('p-pa').innerText = activeRule.pa;
+        } else {
+            uiStatus.innerText = "✅ ACCEPTED"; uiStatus.className = "status-badge accept";
+            pStat.innerText = "ACCEPTED (Actual: " + val + ")";
+            pStat.style.borderColor = "#2ecc71"; pStat.style.color = "#2ecc71";
+            document.getElementById('p-ca').innerText = "None.";
+            document.getElementById('p-pa').innerText = "Continue maintenance.";
+        }
+    }
 
-    reader.readAsDataURL(file);
-}
-function generatePDF() {
-    // 1. Sinkronisasi Data Admin
-    document.getElementById('p-prj').innerText = document.getElementById('ui-prj').value || '-';
-    document.getElementById('p-vsl').innerText = document.getElementById('ui-vsl').value || '-';
-    document.getElementById('p-loc').innerText = document.getElementById('ui-loc').value || '-';
-    document.getElementById('p-qc').innerText = document.getElementById('ui-qc').value || '-';
-    document.getElementById('p-dt').innerText = new Date().toLocaleDateString('id-ID');
+    function generatePDF() {
+        document.getElementById('p-prj').innerText = document.getElementById('ui-prj').value;
+        document.getElementById('p-vsl').innerText = document.getElementById('ui-vsl').value;
+        document.getElementById('p-loc').innerText = document.getElementById('ui-loc').value;
+        document.getElementById('p-qc').innerText = document.getElementById('ui-qc').value;
+        document.getElementById('p-dt').innerText = new Date().toLocaleDateString('id-ID');
 
-    const el = document.getElementById('pdf-template');
-    
-    // 2. Kunci tampilan agar stabil saat difoto oleh library
-    el.style.position = "static";
-    el.style.left = "0";
-    el.style.width = "700px"; // Sedikit diperkecil agar aman dari margin kertas
+        const el = document.getElementById('pdf-template');
+        el.style.position = "static"; el.style.left = "0";
 
-    // 3. Konfigurasi Anti-Potong
-    const opt = {
-        margin: [0.3, 0.3, 0.3, 0.3], // Atas, Kiri, Bawah, Kanan (dalam inci)
-        filename: `QAQC_Report_${document.getElementById('ui-vsl').value || 'Final'}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-            scale: 2, 
-            useCORS: true, 
-            width: 700,
-            letterRendering: true,
-            logging: false
-        },
-        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
-    };
+        html2pdf().set({
+            margin: 0.3,
+            filename: 'QAQC_Report.pdf',
+            html2canvas: { scale: 2, width: 750, windowWidth: 750 },
+            jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+        }).from(el).save().then(() => {
+            el.style.position = "absolute"; el.style.left = "-9999px";
+            alert("PDF Berhasil Dibuat!");
+        });
+    }
+</script>
 
-    // 4. Proses Eksekusi
-    html2pdf().set(opt).from(el).save().then(() => {
-        // Kembalikan template ke posisi tersembunyi
-        el.style.position = "absolute";
-        el.style.left = "-9999px";
-        
-        // Info ke WhatsApp
-        const vsl = document.getElementById('ui-vsl').value || 'Unit';
-        const stat = document.getElementById('ui-status').innerText || 'Completed';
-        window.open(`https://wa.me/?text=*QAQC REPORT*%0AVessel: ${vsl}%0AStatus: ${stat}`, '_blank');
-    }).catch(err => {
-        console.error("PDF Error: ", err);
-        alert("Gagal mencetak PDF. Coba lagi.");
-    });
-}
+</body>
+</html>
