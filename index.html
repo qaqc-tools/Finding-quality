@@ -3,34 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Finding Quality - QA/QC Final</title>
+    <title>Finding Quality - QA/QC Final System</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
+        /* TAMPILAN UI DI HP/KOMPUTER */
         body { font-family: 'Segoe UI', sans-serif; background: #eaeff2; padding: 10px; margin: 0; }
         .ui-container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         h2 { text-align: center; color: #1a3a5a; border-bottom: 3px solid #3498db; padding-bottom: 8px; margin-top: 0; }
         .header-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 15px; }
         label { font-weight: bold; font-size: 11px; color: #555; display: block; margin-bottom: 3px; }
         input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px; font-size: 13px; box-sizing: border-box; }
-        .viewer { width: 100%; height: 250px; background: #000; border-radius: 8px; overflow: hidden; position: relative; margin-top: 10px; display: none; }
-        #zoom-img { width: 100%; height: 100%; object-fit: contain; }
-        .btn-main { background: #3498db; color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .btn-share { background: #25d366; color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 20px; }
+        
+        /* Box Foto & Zoom */
+        .viewer-box { width: 100%; height: 280px; background: #222; border-radius: 10px; overflow: hidden; position: relative; display: none; margin-top: 10px; border: 2px solid #3498db; }
+        #zoom-img { width: 100%; height: 100%; object-fit: contain; transform-origin: center; transition: transform 0.2s; }
+        .zoom-tools { display: flex; justify-content: center; gap: 10px; margin-top: 8px; display: none; }
+        .btn-z { background: #34495e; color: white; border: none; padding: 5px 12px; border-radius: 4px; font-size: 11px; cursor: pointer; }
 
-        /* PDF TEMPLATE - FIXED A4 WIDTH */
+        /* Panel Hasil & CAPA */
+        #res-panel { display: none; margin-top: 15px; border-top: 2px solid #eee; padding-top: 15px; }
+        .ui-capa-area { background: #f9f9f9; padding: 12px; border-radius: 8px; border: 1px solid #ddd; margin-top: 10px; font-size: 12px; }
+        .status-badge { padding: 10px; border-radius: 6px; text-align: center; font-weight: bold; margin: 10px 0; }
+        .reject { background: #fdedec; color: #e74c3c; border: 1px solid #f5b7b1; }
+        .accept { background: #eafaf1; color: #27ae60; border: 1px solid #abebc6; }
+
+        .btn-main { background: #3498db; color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-share { background: #25d366; color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 20px; display: none; }
+
+        /* --- STYLE KHUSUS UNTUK PDF (HIDDEN) --- */
         #pdf-template {
             position: absolute; left: -9999px; top: 0;
             width: 750px; padding: 40px; background: white; color: black;
         }
-        .pdf-header { text-align: center; border-bottom: 3px solid #3498db; margin-bottom: 20px; padding-bottom: 10px; }
-        .pdf-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; table-layout: fixed; }
-        .pdf-table td { padding: 8px; border: 1px solid #ddd; font-size: 13px; }
-        .pdf-photo { width: 100%; height: 350px; object-fit: contain; border: 1px solid #3498db; margin-bottom: 20px; display: block; }
+        .pdf-header { text-align: center; border-bottom: 3px solid #3498db; margin-bottom: 20px; }
+        .pdf-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .pdf-table td { padding: 10px; border: 1px solid #ddd; font-size: 13px; }
+        .pdf-photo-wrap { width: 100%; height: 350px; background: #f3f3f3; border: 1px solid #3498db; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .pdf-photo { max-width: 100%; max-height: 100%; object-fit: contain; }
         .pdf-status { padding: 12px; text-align: center; font-weight: bold; font-size: 18px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #ddd; }
-        .pdf-capa { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .pdf-capa-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .capa-item { border: 1px solid #ccc; padding: 12px; background: #f9f9f9; }
-        .capa-item strong { font-size: 14px; color: #1a3a5a; display: block; margin-bottom: 5px; border-bottom: 1px solid #3498db; }
-        .capa-item p { font-size: 12px; margin: 0; line-height: 1.4; }
     </style>
 </head>
 <body>
@@ -38,28 +50,38 @@
 <div class="ui-container">
     <h2>Finding Quality</h2>
     <div class="header-grid">
-        <div><label>Project Code</label><input type="text" id="ui-prj" placeholder="PRJ01"></div>
+        <div><label>Project Code</label><input type="text" id="ui-prj" placeholder="PRJ-01"></div>
         <div><label>Vessel Name</label><input type="text" id="ui-vsl" placeholder="MT. Ocean"></div>
-        <div><label>Location</label><input type="text" id="ui-loc" placeholder="Hull"></div>
-        <div><label>Inspector</label><input type="text" id="ui-qc" placeholder="Nama Anda"></div>
+        <div><label>Location Area</label><input type="text" id="ui-loc" placeholder="Deck/Hull"></div>
+        <div><label>QC Inspector</label><input type="text" id="ui-qc" placeholder="Nama Anda"></div>
     </div>
 
-    <label>Evidence Foto:</label>
-    <div id="upBtn" style="border:2px dashed #3498db; padding:20px; text-align:center; cursor:pointer; border-radius:10px;" onclick="document.getElementById('fileIn').click()">📸 Klik Ambil Foto</div>
-    <input type="file" id="fileIn" accept="image/*" capture="camera" style="display:none" onchange="preview(event)">
+    <div id="upBtn" style="border:2px dashed #3498db; padding:20px; text-align:center; cursor:pointer; border-radius:10px;" onclick="document.getElementById('fileIn').click()">📸 Klik Ambil Foto / Upload</div>
+    <input type="file" id="fileIn" accept="image/*" capture="camera" style="display:none" onchange="handlePreview(event)">
     
-    <div id="viewer" class="viewer"><img id="zoom-img" src="#"></div>
+    <div id="viewer" class="viewer-box"><img id="zoom-img" src="#"></div>
+    <div id="zTools" class="zoom-tools">
+        <button class="btn-z" onclick="doZoom(-0.2)">Zoom Out</button>
+        <button class="btn-z" onclick="doZoom(0)">Reset</button>
+        <button class="btn-z" onclick="doZoom(0.2)">Zoom In</button>
+    </div>
 
-    <button id="aiBtn" class="btn-main" onclick="scanAI()" disabled>🤖 ANALISA AI</button>
+    <button id="aiBtn" class="btn-main" onclick="runAI()" disabled style="margin-top:15px;">🤖 JALANKAN ANALISA AI</button>
 
-    <div id="res-panel" style="display:none; margin-top:15px; border-top:1px solid #eee; padding-top:10px;">
-        <label>Hasil Deteksi AI:</label>
-        <div id="ui-det" style="background:#f0f7ff; padding:10px; border-radius:6px; font-weight:bold; margin-bottom:10px;">-</div>
+    <div id="res-panel">
+        <div style="background:#f0f7ff; padding:10px; border-radius:6px; font-weight:bold; font-size:13px;">AI Detection: <span id="ui-det-name">-</span></div>
         
-        <label>Ukuran Aktual (mm/%):</label>
-        <input type="number" id="ui-val" placeholder="Input angka" oninput="validateResult()">
+        <label style="margin-top:10px;">Masukan Ukuran Aktual (mm/%):</label>
+        <input type="number" id="ui-val" placeholder="Contoh: 4.5" oninput="processAnalysis()">
         
-        <button id="shareBtn" class="btn-share" style="display:none;" onclick="makePDF()">📄 SHARE PDF REPORT</button>
+        <div id="ui-status" class="status-badge" style="display:none;"></div>
+
+        <div id="ui-capa-display" class="ui-capa-area" style="display:none;">
+            <strong>Corrective Action (CA):</strong><p id="ui-ca-text" style="margin:5px 0 10px 0;"></p>
+            <strong>Preventive Action (PA):</strong><p id="ui-pa-text" style="margin:5px 0 0 0;"></p>
+        </div>
+        
+        <button id="shareBtn" class="btn-share" onclick="generatePDF()">📄 DOWNLOAD & SHARE PDF</button>
     </div>
 </div>
 
@@ -82,61 +104,81 @@
             <td><strong>Analysis:</strong></td><td id="p-det">-</td>
         </tr>
     </table>
-    <img id="p-img" class="pdf-photo" src="">
-    <div id="p-stat" class="pdf-status">PENDING</div>
-    <div class="pdf-capa">
-        <div class="capa-item"><strong>Corrective Action (CA):</strong><p id="p-ca">-</p></div>
-        <div class="capa-item"><strong>Preventive Action (PA):</strong><p id="p-pa">-</p></div>
+    <div class="pdf-photo-wrap"><img id="p-img" class="pdf-photo" src=""></div>
+    <div id="p-stat" class="pdf-status">-</div>
+    <div class="pdf-capa-grid">
+        <div class="capa-item"><strong>Corrective Action:</strong><p id="p-ca">-</p></div>
+        <div class="capa-item"><strong>Preventive Action:</strong><p id="p-pa">-</p></div>
     </div>
 </div>
 
 <script>
-    let rule = null;
-    const db = [
+    let zoomLevel = 1;
+    let currentRule = null;
+    const database = [
         { n: "Plate Alignment (IACS 47)", l: 3, ca: "Perform re-alignment and fit-up as per marking.", pa: "Mandatory QC fit-up check before welding." },
         { n: "Hull Corrosion (BKI)", l: 20, ca: "Crop and renew plate with same grade material.", pa: "Audit coating system and sacrificial anodes." }
     ];
 
-    function preview(e) {
-        const f = e.target.files[0];
-        if (!f) return;
-        const r = new FileReader();
-        r.onload = () => {
-            document.getElementById('zoom-img').src = r.result;
-            document.getElementById('p-img').src = r.result;
+    function handlePreview(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+            document.getElementById('zoom-img').src = reader.result;
+            document.getElementById('p-img').src = reader.result;
             document.getElementById('viewer').style.display = 'block';
+            document.getElementById('zTools').style.display = 'flex';
             document.getElementById('upBtn').style.display = 'none';
             document.getElementById('aiBtn').disabled = false;
         };
-        r.readAsDataURL(f);
+        reader.readAsDataURL(file);
     }
 
-    function scanAI() {
-        rule = db[Math.floor(Math.random() * db.length)];
-        document.getElementById('ui-det').innerText = rule.n;
-        document.getElementById('p-det').innerText = rule.n;
+    function doZoom(val) {
+        if (val === 0) zoomLevel = 1; else zoomLevel = Math.min(Math.max(1, zoomLevel + val), 3);
+        document.getElementById('zoom-img').style.transform = `scale(${zoomLevel})`;
+    }
+
+    function runAI() {
+        currentRule = database[Math.floor(Math.random() * database.length)];
+        document.getElementById('ui-det-name').innerText = currentRule.n;
+        document.getElementById('p-det').innerText = currentRule.n;
         document.getElementById('res-panel').style.display = 'block';
     }
 
-    function validateResult() {
-        const v = parseFloat(document.getElementById('ui-val').value);
-        if (isNaN(v)) return;
+    function processAnalysis() {
+        const val = parseFloat(document.getElementById('ui-val').value);
+        if (isNaN(val)) return;
+        
+        const uiStatus = document.getElementById('ui-status');
+        const uiCapa = document.getElementById('ui-capa-display');
+        const pStat = document.getElementById('p-stat');
+
+        uiStatus.style.display = 'block';
+        uiCapa.style.display = 'block';
         document.getElementById('shareBtn').style.display = 'block';
-        const s = document.getElementById('p-stat');
-        if (v > rule.l) {
-            s.innerText = "❌ REJECTED (Value: " + v + ")";
-            s.style.backgroundColor = "#fdedec"; s.style.color = "#e74c3c";
-            document.getElementById('p-ca').innerText = rule.ca;
-            document.getElementById('p-pa').innerText = rule.pa;
+
+        if (val > currentRule.l) {
+            uiStatus.innerText = "❌ REJECTED"; uiStatus.className = "status-badge reject";
+            pStat.innerText = "REJECTED (Value: " + val + ")"; 
+            pStat.style.backgroundColor = "#fdedec"; pStat.style.color = "#e74c3c";
+            document.getElementById('ui-ca-text').innerText = currentRule.ca;
+            document.getElementById('ui-pa-text').innerText = currentRule.pa;
+            document.getElementById('p-ca').innerText = currentRule.ca;
+            document.getElementById('p-pa').innerText = currentRule.pa;
         } else {
-            s.innerText = "✅ ACCEPTED (Value: " + v + ")";
-            s.style.backgroundColor = "#eafaf1"; s.style.color = "#27ae60";
-            document.getElementById('p-ca').innerText = "None required.";
-            document.getElementById('p-pa').innerText = "Normal maintenance.";
+            uiStatus.innerText = "✅ ACCEPTED"; uiStatus.className = "status-badge accept";
+            pStat.innerText = "ACCEPTED (Value: " + val + ")";
+            pStat.style.backgroundColor = "#eafaf1"; pStat.style.color = "#27ae60";
+            document.getElementById('ui-ca-text').innerText = "None.";
+            document.getElementById('ui-pa-text').innerText = "Maintenance as usual.";
+            document.getElementById('p-ca').innerText = "None.";
+            document.getElementById('p-pa').innerText = "Maintenance as usual.";
         }
     }
 
-    function makePDF() {
+    function generatePDF() {
         document.getElementById('p-prj').innerText = document.getElementById('ui-prj').value || '-';
         document.getElementById('p-vsl').innerText = document.getElementById('ui-vsl').value || '-';
         document.getElementById('p-loc').innerText = document.getElementById('ui-loc').value || '-';
@@ -144,19 +186,22 @@
         document.getElementById('p-dt').innerText = new Date().toLocaleDateString('id-ID');
 
         const el = document.getElementById('pdf-template');
-        el.style.position = "static"; el.style.left = "0";
+        el.style.position = "static";
+        el.style.left = "0";
+        el.style.width = "750px"; // Kunci lebar agar stabil di Komputer
 
         const opt = {
-            margin: 0.3,
+            margin: 0.4,
             filename: `Report_${document.getElementById('ui-vsl').value}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true, width: 750 },
+            html2canvas: { scale: 2, useCORS: true, width: 750, windowWidth: 750 },
             jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
         };
 
         html2pdf().set(opt).from(el).save().then(() => {
-            el.style.position = "absolute"; el.style.left = "-9999px";
-            window.open(`https://wa.me/?text=*QAQC REPORT*%0AVessel: ${document.getElementById('ui-vsl').value}%0AStatus: ${document.getElementById('p-stat').innerText}`, '_blank');
+            el.style.position = "absolute";
+            el.style.left = "-9999px";
+            window.open(`https://wa.me/?text=*QAQC REPORT*%0AVessel: ${document.getElementById('ui-vsl').value}%0AStatus: ${document.getElementById('ui-status').innerText}`, '_blank');
         });
     }
 </script>
