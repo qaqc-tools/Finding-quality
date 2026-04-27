@@ -154,3 +154,48 @@ function handlePreview(e) {
 
     reader.readAsDataURL(file);
 }
+function generatePDF() {
+    // 1. Sinkronisasi Data Admin
+    document.getElementById('p-prj').innerText = document.getElementById('ui-prj').value || '-';
+    document.getElementById('p-vsl').innerText = document.getElementById('ui-vsl').value || '-';
+    document.getElementById('p-loc').innerText = document.getElementById('ui-loc').value || '-';
+    document.getElementById('p-qc').innerText = document.getElementById('ui-qc').value || '-';
+    document.getElementById('p-dt').innerText = new Date().toLocaleDateString('id-ID');
+
+    const el = document.getElementById('pdf-template');
+    
+    // 2. Kunci tampilan agar stabil saat difoto oleh library
+    el.style.position = "static";
+    el.style.left = "0";
+    el.style.width = "700px"; // Sedikit diperkecil agar aman dari margin kertas
+
+    // 3. Konfigurasi Anti-Potong
+    const opt = {
+        margin: [0.3, 0.3, 0.3, 0.3], // Atas, Kiri, Bawah, Kanan (dalam inci)
+        filename: `QAQC_Report_${document.getElementById('ui-vsl').value || 'Final'}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+            scale: 2, 
+            useCORS: true, 
+            width: 700,
+            letterRendering: true,
+            logging: false
+        },
+        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+    };
+
+    // 4. Proses Eksekusi
+    html2pdf().set(opt).from(el).save().then(() => {
+        // Kembalikan template ke posisi tersembunyi
+        el.style.position = "absolute";
+        el.style.left = "-9999px";
+        
+        // Info ke WhatsApp
+        const vsl = document.getElementById('ui-vsl').value || 'Unit';
+        const stat = document.getElementById('ui-status').innerText || 'Completed';
+        window.open(`https://wa.me/?text=*QAQC REPORT*%0AVessel: ${vsl}%0AStatus: ${stat}`, '_blank');
+    }).catch(err => {
+        console.error("PDF Error: ", err);
+        alert("Gagal mencetak PDF. Coba lagi.");
+    });
+}
