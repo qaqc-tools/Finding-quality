@@ -112,98 +112,45 @@
     </div>
 </div>
 
-<script>
-    let zoomLevel = 1;
-    let currentRule = null;
-    const database = [
-        { n: "Plate Alignment (IACS 47)", l: 3, ca: "Perform re-alignment and fit-up as per marking.", pa: "Mandatory QC fit-up check before welding." },
-        { n: "Hull Corrosion (BKI)", l: 20, ca: "Crop and renew plate with same grade material.", pa: "Audit coating system and sacrificial anodes." }
-    ];
-
-    function handlePreview(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = () => {
-            document.getElementById('zoom-img').src = reader.result;
-            document.getElementById('p-img').src = reader.result;
-            document.getElementById('viewer').style.display = 'block';
-            document.getElementById('zTools').style.display = 'flex';
-            document.getElementById('upBtn').style.display = 'none';
-            document.getElementById('aiBtn').disabled = false;
-        };
-        reader.readAsDataURL(file);
+// --- BAGIAN PREVIEW FOTO (REVISI) ---
+function handlePreview(e) {
+    const file = e.target.files[0];
+    if (!file) {
+        alert("Gagal mengambil file foto.");
+        return;
     }
 
-    function doZoom(val) {
-        if (val === 0) zoomLevel = 1; else zoomLevel = Math.min(Math.max(1, zoomLevel + val), 3);
-        document.getElementById('zoom-img').style.transform = `scale(${zoomLevel})`;
+    // Validasi apakah benar file gambar
+    if (!file.type.startsWith('image/')) {
+        alert("Harap pilih file gambar (JPG/PNG).");
+        return;
     }
 
-    function runAI() {
-        currentRule = database[Math.floor(Math.random() * database.length)];
-        document.getElementById('ui-det-name').innerText = currentRule.n;
-        document.getElementById('p-det').innerText = currentRule.n;
-        document.getElementById('res-panel').style.display = 'block';
-    }
+    const reader = new FileReader();
+    
+    // Munculkan indikator loading sederhana
+    document.getElementById('upBtn').innerText = "⌛ Memproses Foto...";
 
-    function processAnalysis() {
-        const val = parseFloat(document.getElementById('ui-val').value);
-        if (isNaN(val)) return;
+    reader.onload = function(event) {
+        const imgData = event.target.result;
         
-        const uiStatus = document.getElementById('ui-status');
-        const uiCapa = document.getElementById('ui-capa-display');
-        const pStat = document.getElementById('p-stat');
+        // Masukkan foto ke viewer aplikasi
+        document.getElementById('zoom-img').src = imgData;
+        // Masukkan foto ke template PDF
+        document.getElementById('p-img').src = imgData;
+        
+        // Atur tampilan tombol
+        document.getElementById('viewer').style.display = 'block';
+        document.getElementById('zTools').style.display = 'flex';
+        document.getElementById('upBtn').style.display = 'none';
+        document.getElementById('aiBtn').disabled = false;
+        
+        console.log("Foto berhasil dimuat.");
+    };
 
-        uiStatus.style.display = 'block';
-        uiCapa.style.display = 'block';
-        document.getElementById('shareBtn').style.display = 'block';
+    reader.onerror = function() {
+        alert("Terjadi kesalahan saat membaca file.");
+    };
 
-        if (val > currentRule.l) {
-            uiStatus.innerText = "❌ REJECTED"; uiStatus.className = "status-badge reject";
-            pStat.innerText = "REJECTED (Value: " + val + ")"; 
-            pStat.style.backgroundColor = "#fdedec"; pStat.style.color = "#e74c3c";
-            document.getElementById('ui-ca-text').innerText = currentRule.ca;
-            document.getElementById('ui-pa-text').innerText = currentRule.pa;
-            document.getElementById('p-ca').innerText = currentRule.ca;
-            document.getElementById('p-pa').innerText = currentRule.pa;
-        } else {
-            uiStatus.innerText = "✅ ACCEPTED"; uiStatus.className = "status-badge accept";
-            pStat.innerText = "ACCEPTED (Value: " + val + ")";
-            pStat.style.backgroundColor = "#eafaf1"; pStat.style.color = "#27ae60";
-            document.getElementById('ui-ca-text').innerText = "None.";
-            document.getElementById('ui-pa-text').innerText = "Maintenance as usual.";
-            document.getElementById('p-ca').innerText = "None.";
-            document.getElementById('p-pa').innerText = "Maintenance as usual.";
-        }
-    }
-
-    function generatePDF() {
-        document.getElementById('p-prj').innerText = document.getElementById('ui-prj').value || '-';
-        document.getElementById('p-vsl').innerText = document.getElementById('ui-vsl').value || '-';
-        document.getElementById('p-loc').innerText = document.getElementById('ui-loc').value || '-';
-        document.getElementById('p-qc').innerText = document.getElementById('ui-qc').value || '-';
-        document.getElementById('p-dt').innerText = new Date().toLocaleDateString('id-ID');
-
-        const el = document.getElementById('pdf-template');
-        el.style.position = "static";
-        el.style.left = "0";
-        el.style.width = "750px"; // Kunci lebar agar stabil di Komputer
-
-        const opt = {
-            margin: 0.4,
-            filename: `Report_${document.getElementById('ui-vsl').value}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true, width: 750, windowWidth: 750 },
-            jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
-        };
-
-        html2pdf().set(opt).from(el).save().then(() => {
-            el.style.position = "absolute";
-            el.style.left = "-9999px";
-            window.open(`https://wa.me/?text=*QAQC REPORT*%0AVessel: ${document.getElementById('ui-vsl').value}%0AStatus: ${document.getElementById('ui-status').innerText}`, '_blank');
-        });
-    }
-</script>
-</body>
-</html>
+    reader.readAsDataURL(file);
+}
